@@ -68,7 +68,7 @@ task relocateShadowJar(type: ConfigureShadowRelocation) {
 tasks.shadowJar.dependsOn tasks.relocateShadowJar
 
 task asyncProfilerLib {
-    def suffixes = ['linux-aarch64', 'linux-arm', 'linux-x64', 'linux-x86', 'macos-x64']
+    def suffixes = ['linux-aarch64', 'linux-arm', 'linux-x64', 'linux-x86', 'linux-musl-x64', 'macos-x64']
 
     def asyncProfilerDir = file("$buildDir/async-profiler")
     outputs.file "$asyncProfilerDir/async-profiler.jar"

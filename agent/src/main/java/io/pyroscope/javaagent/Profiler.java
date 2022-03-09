@@ -4,13 +4,12 @@ import one.profiler.AsyncProfiler;
 import one.profiler.Counter;
 import org.apache.logging.log4j.Logger;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.*;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 class Profiler {
     private final Logger logger;
@@ -31,6 +30,8 @@ class Profiler {
      */
     private static void deployLibrary() throws IOException {
         final String fileName = libraryFileName();
+
+        System.out.println("Deploy library: " + fileName);
 
         final String userName = System.getProperty("user.name");
         final String tmpDir = System.getProperty("java.io.tmpdir");
@@ -93,7 +94,42 @@ class Profiler {
                 throw new RuntimeException("Unsupported OS " + osProperty);
         }
 
-        return "libasyncProfiler-" + os + "-" + arch + ".so";
+        String muslDash = isLinuxMusl(os, arch) ? "-dash-" : "-";
+        return "libasyncProfiler-" + os + muslDash + arch + ".so";
+    }
+
+    private static boolean isLinuxMusl(String os, String arch) {
+        boolean linuxMusl = false;
+        if (os.equals("linux") && arch.equals("x86")) {
+            // check if musl (Alpine) is used instead of std lib
+            // first is just "Linux", second is "Linux/GNU"
+            String uname = execCommand("uname -o");
+            System.out.println("Output command uname -o: [" + uname + "]");
+            if (uname.equals("Linux")) {
+                linuxMusl = true;
+            }
+        }
+        return linuxMusl;
+    }
+
+    private static String execCommand(String cmd) {
+        Runtime run = Runtime.getRuntime();
+        Process process;
+        try {
+            process = run.exec(cmd);
+            process.waitFor(2, TimeUnit.SECONDS);
+            BufferedReader buf = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            StringBuilder output = new StringBuilder();
+            while ((line = buf.readLine()) != null) {
+                output.append(line);
+            }
+            return output.toString();
+        } catch (IOException | InterruptedException e) {
+            // failure to run command, return default value
+            System.err.println("Failed to execute command: " + cmd);
+            return "Linux/GNU";
+        }
     }
 
     /**

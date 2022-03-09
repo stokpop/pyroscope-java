@@ -31,7 +31,7 @@ class Profiler {
     private static void deployLibrary() throws IOException {
         final String fileName = libraryFileName();
 
-        System.out.println("Deploy library: " + fileName);
+        PreConfigLogger.LOGGER.info("Deploy library: {}", fileName);
 
         final String userName = System.getProperty("user.name");
         final String tmpDir = System.getProperty("java.io.tmpdir");
@@ -104,7 +104,7 @@ class Profiler {
             // check if musl (Alpine) is used instead of std lib
             // first is just "Linux", second is "Linux/GNU"
             String uname = execCommand("uname -o");
-            System.out.println("Output command uname -o: [" + uname + "]");
+            PreConfigLogger.LOGGER.info("Output command uname -o: [{}]", uname);
             if (uname.equals("Linux")) {
                 linuxMusl = true;
             }
@@ -127,7 +127,7 @@ class Profiler {
             return output.toString();
         } catch (IOException | InterruptedException e) {
             // failure to run command, return default value
-            System.err.println("Failed to execute command: " + cmd);
+            PreConfigLogger.LOGGER.warn("Failed to execute command: " + cmd);
             return "Linux/GNU";
         }
     }

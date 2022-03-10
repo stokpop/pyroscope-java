@@ -63,7 +63,7 @@ class Profiler {
                         break;
 
                     case "amd64":
-                        arch = "x64";
+                        arch = isLinuxMusl() ? "musl-x64" : "x64";
                         break;
 
                     case "arm":
@@ -71,6 +71,9 @@ class Profiler {
                         break;
 
                     case "aarch64":
+                        if (isLinuxMusl()) {
+                            throw new RuntimeException("Unsupported architecture musl-aarch64");
+                        }
                         arch = "aarch64";
                         break;
 
@@ -94,21 +97,20 @@ class Profiler {
                 throw new RuntimeException("Unsupported OS " + osProperty);
         }
 
-        String muslDash = isLinuxMusl(os, arch) ? "-dash-" : "-";
-        return "libasyncProfiler-" + os + muslDash + arch + ".so";
+        return "libasyncProfiler-" + os + "-" + arch + ".so";
     }
 
-    private static boolean isLinuxMusl(String os, String arch) {
+    private static boolean isLinuxMusl() {
         boolean linuxMusl = false;
-        if (os.equals("linux") && arch.equals("x86")) {
-            // check if musl (Alpine) is used instead of std lib
-            // first is just "Linux", second is "Linux/GNU"
-            String uname = execCommand("uname -o");
-            PreConfigLogger.LOGGER.info("Output command uname -o: [{}]", uname);
-            if (uname.equals("Linux")) {
-                linuxMusl = true;
-            }
+
+        // check if musl (Alpine) is used instead of std lib
+        // first is just "Linux", second is "Linux/GNU" (https://stackoverflow.com/questions/70784245/decide-gnu-or-musl-build-of-linux-in-java)
+        String uname = execCommand("uname -o");
+        PreConfigLogger.LOGGER.info("Output command uname -o: [{}]", uname);
+        if (uname.equals("Linux")) {
+            linuxMusl = true;
         }
+
         return linuxMusl;
     }
 
